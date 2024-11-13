@@ -3,8 +3,17 @@ import requests
 from bs4 import BeautifulSoup
 import telepot
 import re
+import os
 
 app = Flask(__name__)
+
+# Configure upload folder and allowed extensions
+app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['ALLOWED_EXTENSIONS'] = {'txt'}
+
+# Function to check if the file is valid
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 # Function to read sites from a file
 def read_sites(file_path):
@@ -86,38 +95,57 @@ def home():
 # Result route (to process the form and send response)
 @app.route('/check', methods=['POST'])
 def check():
+    # Retrieve bot token and chat ID
     bot_token = request.form['bot_token']
     chat_id = request.form['chat_id']
-    sites = request.form['sites'].splitlines()  # Get sites from the textarea
+    
+    # Handle file upload
+    if 'file' not in request.files:
+        return 'No file part', 400
+    file = request.files['file']
+    
+    if file.filename == '':
+        return 'No selected file', 400
+    
+    if file and allowed_file(file.filename):
+        # Save the file temporarily
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+        file.save(filepath)
 
-    for site in sites:
-        formatted_site = format_url(site)
-        response, status_message = check_site_status(formatted_site)
-        
-        if response:
-            cloudflare = check_cloudflare(response)
-            captcha = check_captcha(response)
-            gateway = check_payment_gateway(response)
-            
-            cloudflare_status = 'Yes 😔' if cloudflare else 'No 🔥'
-            captcha_status = 'Yes 😔' if captcha else 'No 🔥'
-            overall_status = 'Good 🔥' if not cloudflare and not captcha else 'Not good 😔'
-            
-            message = (f"Gateways Fetched Successfully ✅\n"
-                       f"━━━━━━━━━━━━━━\n"
-                       f"➔ Website ⋙ ({site})\n"
-                       f"➔ Gateways ⋙ ({gateway})\n"
-                       f"➔ Captcha ⋙ ({captcha_status})\n"
-                       f"➔ Cloudflare ⋙ ({cloudflare_status})\n"
-                       f"➔ Status ⋙ ({overall_status})\n"
-                       f"\nBot by - @itsyo3")
-        else:
-            message = f"Site: {site}\nStatus: {status_message}"
-        
-        # Send the result to the user's Telegram bot
-        send_to_telegram(bot_token, chat_id, message)
+        # Read sites from the uploaded file
+        sites = read_sites(filepath)
 
-    return render_template('index.html', message="Check completed! Results sent to your bot.")
+        # Process each site
+        for site in sites:
+            formatted_site = format_url(site)
+            response, status_message = check_site_status(formatted_site)
+            
+            if response:
+                cloudflare = check_cloudflare(response)
+                captcha = check_captcha(response)
+                gateway = check_payment_gateway(response)
+                
+                cloudflare_status = 'Yes 😔' if cloudflare else 'No 🔥'
+                captcha_status = 'Yes 😔' if captcha else 'No 🔥'
+                overall_status = 'Good 🔥' if not cloudflare and not captcha else 'Not good 😔'
+                
+                message = (f"Gateways Fetched Successfully ✅\n"
+                           f"━━━━━━━━━━━━━━\n"
+                           f"➔ Website ⋙ ({site})\n"
+                           f"➔ Gateways ⋙ ({gateway})\n"
+                           f"➔ Captcha ⋙ ({captcha_status})\n"
+                           f"➔ Cloudflare ⋙ ({cloudflare_status})\n"
+                           f"➔ Status ⋙ ({overall_status})\n"
+                           f"\nBot by - @your_bot_username")
+            else:
+                message = f"Site: {site}\nStatus: {status_message}"
+            
+            # Send the result to the user's Telegram bot
+            send_to_telegram(bot_token, chat_id, message)
+
+        return render_template('index.html', message="Check completed! Results sent to your bot.")
+
+    return 'File type not allowed', 400
 
 if __name__ == '__main__':
     app.run(debug=True)
