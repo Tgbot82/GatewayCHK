@@ -3,109 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Gateway Checker</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>Gateway Checker</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
             background-color: #f4f4f4;
+            padding: 20px;
         }
         .container {
-            width: 80%;
+            max-width: 800px;
             margin: 0 auto;
+            background-color: white;
             padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         h1 {
             text-align: center;
-            color: #333;
+            margin-bottom: 20px;
         }
-        .form-container {
-            display: flex;
-            justify-content: center;
-            margin: 20px 0;
+        .input-group {
+            margin-bottom: 15px;
         }
-        .form-container input {
-            width: 80%;
+        .input-group input {
+            width: 100%;
             padding: 10px;
-            margin-right: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
-        .form-container button {
-            padding: 10px 15px;
+        .input-group label {
+            font-weight: bold;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
             background-color: #4CAF50;
             color: white;
             border: none;
-            border-radius: 5px;
-            cursor: pointer;
+            border-radius: 4px;
+            font-size: 16px;
         }
-        .form-container button:hover {
-            background-color: #45a049;
-        }
-        .gateway-list {
-            margin-top: 20px;
-        }
-        .gateway-list ul {
-            list-style-type: none;
-            padding: 0;
-        }
-        .gateway-list li {
-            background-color: #fff;
+        .result {
+            background-color: #f9f9f9;
             padding: 10px;
-            margin-bottom: 5px;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .gateway-list li span {
-            font-weight: bold;
+            margin-top: 20px;
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Payment Gateway Checker</h1>
-    <div class="form-container">
-        <input type="text" id="siteInput" placeholder="Enter website URL(s)">
-        <button id="checkButton">Check Gateways</button>
-    </div>
+    <h1>Gateway Checker</h1>
+    
+    <form action="/check_gateways" method="GET">
+        <div class="input-group">
+            <label for="site">Enter Website URL:</label>
+            <input type="text" id="site" name="site" required placeholder="e.g., https://example.com">
+        </div>
+        
+        <div class="input-group">
+            <label for="token">Enter Your Bot Token:</label>
+            <input type="text" id="token" name="token" required placeholder="e.g., 123456789:ABCDEF1234567890">
+        </div>
+        
+        <div class="input-group">
+            <label for="chat_id">Enter Your Chat ID:</label>
+            <input type="text" id="chat_id" name="chat_id" required placeholder="e.g., 123456789">
+        </div>
 
-    <div class="gateway-list">
-        <h3>Detected Gateways:</h3>
-        <ul id="gatewayList"></ul>
-    </div>
+        <button type="submit" class="btn">Check Gateway</button>
+    </form>
+
+    {% if gateway %}
+        <div class="result">
+            <h3>Result:</h3>
+            <p><strong>Detected Gateways:</strong> {{ gateway }}</p>
+            <p><strong>Site ID:</strong> {{ site_id }}</p>
+            <p><strong>Token:</strong> {{ token }}</p>
+        </div>
+    {% endif %}
 </div>
-
-<script>
-    document.getElementById('checkButton').addEventListener('click', function() {
-        var siteInput = document.getElementById('siteInput').value;
-        var siteList = siteInput.split(',');
-
-        var gatewayList = document.getElementById('gatewayList');
-        gatewayList.innerHTML = '';
-
-        siteList.forEach(function(site) {
-            site = site.trim();
-            if (site) {
-                // Make an AJAX request to check the payment gateways for each site
-                fetch(`/check_gateways?site=${encodeURIComponent(site)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        var listItem = document.createElement('li');
-                        listItem.innerHTML = `<span>${site}:</span> ${data.gateway}`;
-                        gatewayList.appendChild(listItem);
-                    })
-                    .catch(error => {
-                        var listItem = document.createElement('li');
-                        listItem.innerHTML = `<span>${site}:</span> Error checking gateways`;
-                        gatewayList.appendChild(listItem);
-                    });
-            }
-        });
-    });
-</script>
 
 </body>
 </html>
