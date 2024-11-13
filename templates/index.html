@@ -3,33 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Site Gateway Checker</title>
+    <title>Payment Gateway Checker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .form-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .form-container input {
+            width: 80%;
+            padding: 10px;
+            margin-right: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .form-container button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .form-container button:hover {
+            background-color: #45a049;
+        }
+        .gateway-list {
+            margin-top: 20px;
+        }
+        .gateway-list ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .gateway-list li {
+            background-color: #fff;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .gateway-list li span {
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-    <h1>Enter Sites (one per line):</h1>
-    <form method="POST">
-        <textarea name="sites" rows="10" cols="50"></textarea><br><br>
-        <input type="submit" value="Check Sites">
-    </form>
 
-    {% if results %}
-    <h2>Results</h2>
-    <ul>
-        {% for result in results %}
-            <li>
-                <strong>{{ result.site }}:</strong><br>
-                {% if result.gateway %}
-                    Gateway: {{ result.gateway }}<br>
-                {% endif %}
-                Captcha: {{ result.captcha_status }}<br>
-                Cloudflare: {{ result.cloudflare_status }}<br>
-                Status: {{ result.overall_status }}<br>
-                <hr>
-            {% else %}
-                <strong>{{ result.site }}:</strong> {{ result.status }}<br>
-            {% endif %}
-        {% endfor %}
-    </ul>
-    {% endif %}
+<div class="container">
+    <h1>Payment Gateway Checker</h1>
+    <div class="form-container">
+        <input type="text" id="siteInput" placeholder="Enter website URL(s)">
+        <button id="checkButton">Check Gateways</button>
+    </div>
+
+    <div class="gateway-list">
+        <h3>Detected Gateways:</h3>
+        <ul id="gatewayList"></ul>
+    </div>
+</div>
+
+<script>
+    document.getElementById('checkButton').addEventListener('click', function() {
+        var siteInput = document.getElementById('siteInput').value;
+        var siteList = siteInput.split(',');
+
+        var gatewayList = document.getElementById('gatewayList');
+        gatewayList.innerHTML = '';
+
+        siteList.forEach(function(site) {
+            site = site.trim();
+            if (site) {
+                // Make an AJAX request to check the payment gateways for each site
+                fetch(`/check_gateways?site=${encodeURIComponent(site)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        var listItem = document.createElement('li');
+                        listItem.innerHTML = `<span>${site}:</span> ${data.gateway}`;
+                        gatewayList.appendChild(listItem);
+                    })
+                    .catch(error => {
+                        var listItem = document.createElement('li');
+                        listItem.innerHTML = `<span>${site}:</span> Error checking gateways`;
+                        gatewayList.appendChild(listItem);
+                    });
+            }
+        });
+    });
+</script>
+
 </body>
 </html>
