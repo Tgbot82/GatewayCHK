@@ -3,89 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gateway Checker</title>
+    <title>Site Checker</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            padding: 20px;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .input-group {
-            margin-bottom: 15px;
-        }
-        .input-group input {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        .input-group label {
-            font-weight: bold;
-        }
-        .btn {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        .result {
-            background-color: #f9f9f9;
-            padding: 10px;
-            margin-top: 20px;
-            border-radius: 4px;
-        }
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; background: white; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); border-radius: 10px; }
+        h1 { text-align: center; }
+        label { display: block; margin-bottom: 10px; font-weight: bold; }
+        input, textarea { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ddd; }
+        button { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        .message { margin-top: 20px; text-align: center; font-size: 18px; color: green; }
     </style>
 </head>
 <body>
+    <div class="container">
+        <h1>Website Gateway Checker</h1>
+        <form action="/check" method="POST" enctype="multipart/form-data">
+            <label for="bot_token">Bot Token:</label>
+            <input type="text" name="bot_token" id="bot_token" required>
 
-<div class="container">
-    <h1>Gateway Checker</h1>
-    
-    <form action="/check_gateways" method="GET">
-        <div class="input-group">
-            <label for="site">Enter Website URL:</label>
-            <input type="text" id="site" name="site" required placeholder="e.g., https://example.com">
-        </div>
-        
-        <div class="input-group">
-            <label for="token">Enter Your Bot Token:</label>
-            <input type="text" id="token" name="token" required placeholder="e.g., 123456789:ABCDEF1234567890">
-        </div>
-        
-        <div class="input-group">
-            <label for="chat_id">Enter Your Chat ID:</label>
-            <input type="text" id="chat_id" name="chat_id" required placeholder="e.g., 123456789">
-        </div>
+            <label for="chat_id">Chat ID:</label>
+            <input type="text" name="chat_id" id="chat_id" required>
 
-        <button type="submit" class="btn">Check Gateway</button>
-    </form>
-
-    {% if gateway %}
-        <div class="result">
-            <h3>Result:</h3>
-            <p><strong>Detected Gateways:</strong> {{ gateway }}</p>
-            <p><strong>Site ID:</strong> {{ site_id }}</p>
-            <p><strong>Token:</strong> {{ token }}</p>
-        </div>
-    {% endif %}
-</div>
-
-</body>
-</html>
+            <label for="file">Upload Sites List (.txt):</label>
+            <input type="file" name="file" id="file" accept=".txt" required
