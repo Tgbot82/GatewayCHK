@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Gateway Checker</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { max-width: 800px; margin: auto; padding: 20px; }
+        input, textarea, button { width: 100%; padding: 10px; margin-top: 10px; }
+        .result-box { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Payment Gateway Checker</h2>
+    <form id="checker-form">
+        <label for="urls">Enter URLs (one per line):</label>
+        <textarea id="urls" name="urls" rows="6" required></textarea>
+
+        <label for="bot_token">Bot Token:</label>
+        <input type="text" id="bot_token" name="bot_token" required>
+
+        <label for="chat_id">Chat ID:</label>
+        <input type="text" id="chat_id" name="chat_id" required>
+
+        <button type="submit">Check Gateways</button>
+    </form>
+
+    <div id="results"></div>
+</div>
+
+<script>
+    document.getElementById('checker-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch('/check_sites', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<h3>Results:</h3>';
+            
+            // Display each site result
+            data.results.forEach(result => {
+                resultsDiv.innerHTML += `
+                    <div class="result-box">
+                        <strong>Site:</strong> ${result.site}<br>
+                        <strong>Gateways:</strong> ${result.gateways}<br>
+                        <strong>Status:</strong> ${result.status}
+                    </div>
+                `;
+            });
+            
+            // Display gateway counts
+            resultsDiv.innerHTML += '<h3>Gateway Summary:</h3><ul>';
+            for (const [gateway, count] of Object.entries(data.gateway_counts)) {
+                resultsDiv.innerHTML += `<li>${gateway}: ${count}</li>`;
+            }
+            resultsDiv.innerHTML += '</ul>';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('results').innerHTML = '<p>Error checking sites.</p>';
+        });
+    });
+</script>
+</body>
+</html>
