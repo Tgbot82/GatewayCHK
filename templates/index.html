@@ -26,4 +26,14 @@
             <input type="text" name="chat_id" id="chat_id" required>
 
             <label for="file">Upload Sites List (.txt):</label>
-            <input type="file" name="file" id="file" accept=".txt" required
+            <input type="file" name="file" id="file" accept=".txt" required>
+            
+            <button type="submit">Submit</button>
+        </form>
+
+        {% if message %}
+            <div class="message">{{ message }}</div>
+        {% endif %}
+    </div>
+</body>
+</html>
