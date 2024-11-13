@@ -1,70 +1,123 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request
 import requests
 from bs4 import BeautifulSoup
+import telepot
 import re
 
 app = Flask(__name__)
 
-# Function to send a message to Telegram
-def send_to_telegram(token, chat_id, message):
-    url = f"https://api.telegram.org/bot{token}/sendMessage"
-    payload = {
-        'chat_id': chat_id,
-        'text': message
-    }
-    response = requests.post(url, data=payload)
-    return response
+# Function to read sites from a file
+def read_sites(file_path):
+    with open(file_path, 'r') as file:
+        sites = file.readlines()
+    return [site.strip() for site in sites]
 
-# Function to check payment gateways on a website
-def check_payment_gateway(url):
+# Function to format URLs
+def format_url(url):
+    if not url.startswith('http://') and not url.startswith('https://'):
+        return 'http://' + url
+    return url
+
+# Function to check site status
+def check_site_status(url):
     try:
-        response = requests.get(url, timeout=5)
-        text = response.text.lower()
+        response = requests.get(url, timeout=5)  # Reduced timeout to 5 seconds for faster checks
+        if response.status_code == 200:
+            return response, None
+        else:
+            return None, f"Error: Received status code {response.status_code}"
+    except requests.RequestException as e:
+        return None, f"Error: {e}"
 
-        gateways = {
-            'stripe': 'Stripe',
-            'braintree': 'Braintree',
-            'paypal': 'PayPal',
-            'skrill': 'Skrill',
-            'payoneer': 'Payoneer',
-            'shopify': 'Shopify',
-            'visa': 'Visa',
-            'mastercard': 'Mastercard',
-            'google pay': 'Google Pay',
-            'apple pay': 'Apple Pay',
-            'amazon pay': 'Amazon Pay'
-        }
+# Function to check Cloudflare presence
+def check_cloudflare(response):
+    return 'cloudflare' in response.headers.get('Server', '').lower()
 
-        detected_gateways = [name for keyword, name in gateways.items() if keyword in text]
-        return ', '.join(detected_gateways) if detected_gateways else 'No gateways detected'
+# Function to check for captcha presence
+def check_captcha(response):
+    soup = BeautifulSoup(response.text, 'html.parser')
+    return bool(soup.find_all(string=re.compile(r'captcha', re.I)))
 
-    except Exception as e:
-        return f"Error: {str(e)}"
+# Function to check payment gateways
+def check_payment_gateway(response):
+    text = response.text.lower()
+    gateways = {
+        'stripe': 'Stripe',
+        'braintree': 'Braintree',
+        'shopify': 'Shopify',
+        'paypal': 'PayPal',
+        'skrill': 'Skrill',
+        'payoneer': 'Payoneer',
+        'nab': 'NAB',
+        'omise': 'Omise',
+        'epay': 'ePay',
+        'mastercard': 'Mastercard',
+        'visa': 'Visa',
+        'discover': 'Discover',
+        'american express': 'American Express',
+        'adyen': 'Adyen',
+        'square': 'Square',
+        'authorize.net': 'Authorize.Net',
+        '2checkout': '2Checkout',
+        'worldpay': 'Worldpay',
+        'alipay': 'Alipay',
+        'wechat pay': 'WeChat Pay',
+        'unionpay': 'UnionPay',
+        'apple pay': 'Apple Pay',
+        'google pay': 'Google Pay',
+        'amazon pay': 'Amazon Pay'
+    }
+    detected_gateways = [name for keyword, name in gateways.items() if keyword in text]
+    return ', '.join(detected_gateways) if detected_gateways else 'Unknown'
 
+# Function to send a message to Telegram bot
+def send_to_telegram(bot_token, chat_id, message):
+    bot = telepot.Bot(bot_token)
+    try:
+        bot.sendMessage(chat_id, message)
+    except telepot.exception.TelegramError as e:
+        print(f"Failed to send message: {e}")
+
+# Home route (render the form)
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return render_template("index.html")
 
-@app.route('/check_gateways')
-def check_gateways():
-    site = request.args.get('site')
-    token = request.args.get('token')
-    chat_id = request.args.get('chat_id')
+# Result route (to process the form and send response)
+@app.route('/check', methods=['POST'])
+def check():
+    bot_token = request.form['bot_token']
+    chat_id = request.form['chat_id']
+    sites = request.form['sites'].splitlines()  # Get sites from the textarea
 
-    if site:
-        site = site.strip()
-        gateways = check_payment_gateway(site)
+    for site in sites:
+        formatted_site = format_url(site)
+        response, status_message = check_site_status(formatted_site)
+        
+        if response:
+            cloudflare = check_cloudflare(response)
+            captcha = check_captcha(response)
+            gateway = check_payment_gateway(response)
+            
+            cloudflare_status = 'Yes 😔' if cloudflare else 'No 🔥'
+            captcha_status = 'Yes 😔' if captcha else 'No 🔥'
+            overall_status = 'Good 🔥' if not cloudflare and not captcha else 'Not good 😔'
+            
+            message = (f"Gateways Fetched Successfully ✅\n"
+                       f"━━━━━━━━━━━━━━\n"
+                       f"➔ Website ⋙ ({site})\n"
+                       f"➔ Gateways ⋙ ({gateway})\n"
+                       f"➔ Captcha ⋙ ({captcha_status})\n"
+                       f"➔ Cloudflare ⋙ ({cloudflare_status})\n"
+                       f"➔ Status ⋙ ({overall_status})\n"
+                       f"\nBot by - @itsyo3")
+        else:
+            message = f"Site: {site}\nStatus: {status_message}"
+        
+        # Send the result to the user's Telegram bot
+        send_to_telegram(bot_token, chat_id, message)
 
-        # Construct message to send to Telegram
-        message = f"Site: {site}\n"
-        message += f"Detected Gateways: {gateways}"
-
-        # Send the information to Telegram
-        send_to_telegram(token, chat_id, message)
-
-        return render_template('index.html', gateway=gateways, site_id=site, token=token)
-    else:
-        return render_template('index.html', gateway='No URL provided')
+    return render_template('index.html', message="Check completed! Results sent to your bot.")
 
 if __name__ == '__main__':
     app.run(debug=True)
