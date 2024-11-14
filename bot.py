@@ -111,10 +111,15 @@ def receive_update():
         handle_message(update["message"])
     return jsonify({"status": "ok"})
 
-# Set webhook when starting
-@app.before_first_request
+# Set webhook when starting the Flask app
+@app.route('/set-webhook', methods=["GET"])
 def set_webhook():
-    bot.setWebhook(WEBHOOK_URL)
+    url = f"https://api.telegram.org/bot{bot_token}/setWebhook?url={WEBHOOK_URL}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        return "Webhook set successfully!"
+    else:
+        return "Failed to set webhook!"
 
 # Run Flask app
 if __name__ == "__main__":
