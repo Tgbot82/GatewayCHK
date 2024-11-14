@@ -6,14 +6,14 @@ from flask import Flask, request, jsonify
 import re
 
 # Initialize the bot with your token
-bot_token = '7828618514:AAGbumaaNSLyqNn1NbtJbIJ7j0u8RS-a5kw'  # Your actual bot token
+bot_token = '7828618514:AAGbumaaNSLyqNn1NbtJbIJ7j0u8RS-a5kw'  # Your bot token
 bot = telepot.Bot(bot_token)
 
 # Create a Flask app
 app = Flask(__name__)
 
 # Define your Render app URL here
-WEBHOOK_URL = f"https://my-gateway-bot.onrender.com/{bot_token}"  # Your Render app URL (Replace with your actual Render app URL)
+WEBHOOK_URL = f"https://gatewaychk.onrender.com/{bot_token}"  # Your Render app URL
 
 # Helper functions
 def format_url(url):
@@ -75,7 +75,8 @@ def create_site_report(site):
 def handle_message(msg):
     chat_id = msg['chat']['id']
     text = msg['text']
-    
+    print(f"Received message: {text}")  # Log the received message
+
     if text.startswith('/start'):
         bot.sendMessage(chat_id, f"Hello {msg['from']['first_name']}, welcome to Eon Gateway Chk bot!")
     elif text.startswith('/cmds'):
@@ -107,19 +108,16 @@ def handle_message(msg):
 @app.route(f"/{bot_token}", methods=["POST"])
 def receive_update():
     update = request.get_json()
+    print("Received update:", update)  # Log the incoming update
     if "message" in update:
         handle_message(update["message"])
     return jsonify({"status": "ok"})
 
-# Set webhook when starting the Flask app
-@app.route('/set-webhook', methods=["GET"])
+# Set webhook when starting
+@app.before_first_request
 def set_webhook():
-    url = f"https://api.telegram.org/bot{bot_token}/setWebhook?url={WEBHOOK_URL}"
-    response = requests.get(url)
-    if response.status_code == 200:
-        return "Webhook set successfully!"
-    else:
-        return "Failed to set webhook!"
+    bot.setWebhook(WEBHOOK_URL)
+    print("Webhook set to:", WEBHOOK_URL)  # Log when webhook is set
 
 # Run Flask app
 if __name__ == "__main__":
