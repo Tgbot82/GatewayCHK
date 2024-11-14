@@ -111,11 +111,12 @@ def receive_update():
         handle_message(update["message"])
     return jsonify({"status": "ok"})
 
-# Set webhook when starting
-@app.before_first_request
-def set_webhook():
-    bot.setWebhook(WEBHOOK_URL)
+# Temporarily disable the webhook setup for deployment testing
+# @app.before_first_request
+# def set_webhook():
+#     bot.setWebhook(WEBHOOK_URL)
 
 # Run Flask app
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    # Use host="0.0.0.0" for production and port 80 for HTTP requests
+    app.run(host="0.0.0.0", port=80)
