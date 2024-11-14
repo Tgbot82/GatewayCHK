@@ -113,12 +113,10 @@ def receive_update():
         handle_message(update["message"])
     return jsonify({"status": "ok"})
 
-# Set webhook when starting
-@app.before_first_request
-def set_webhook():
-    bot.setWebhook(WEBHOOK_URL)
-    print("Webhook set to:", WEBHOOK_URL)  # Log when webhook is set
-
 # Run Flask app
 if __name__ == "__main__":
+    # Set the webhook in the main block to avoid errors with before_first_request
+    response = bot.setWebhook(WEBHOOK_URL)
+    print(f"Webhook set response: {response}")  # Log the webhook response
+
     app.run(host="0.0.0.0", port=5000)
