@@ -6,14 +6,14 @@ from flask import Flask, request, jsonify
 import re
 
 # Initialize the bot with your token
-bot_token = '7828618514:AAGbumaaNSLyqNn1NbtJbIJ7j0u8RS-a5kw'  # Your bot token
+bot_token = '7828618514:AAGbumaaNSLyqNn1NbtJbIJ7j0u8RS-a5kw'  # Your actual bot token
 bot = telepot.Bot(bot_token)
 
 # Create a Flask app
 app = Flask(__name__)
 
 # Define your Render app URL here
-WEBHOOK_URL = f"https://gatewaychk.onrender.com/{bot_token}"  # Your Render app URL
+WEBHOOK_URL = f"https://my-gateway-bot.onrender.com/{bot_token}"  # Your Render app URL (Replace with your actual Render app URL)
 
 # Helper functions
 def format_url(url):
@@ -111,12 +111,11 @@ def receive_update():
         handle_message(update["message"])
     return jsonify({"status": "ok"})
 
-# Temporarily disable the webhook setup for deployment testing
-# @app.before_first_request
-# def set_webhook():
-#     bot.setWebhook(WEBHOOK_URL)
+# Set webhook when starting
+@app.before_first_request
+def set_webhook():
+    bot.setWebhook(WEBHOOK_URL)
 
 # Run Flask app
 if __name__ == "__main__":
-    # Use host="0.0.0.0" for production and port 80 for HTTP requests
-    app.run(host="0.0.0.0", port=80)
+    app.run(host="0.0.0.0", port=5000)
