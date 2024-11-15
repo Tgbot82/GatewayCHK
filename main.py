@@ -5,15 +5,15 @@ import telepot
 from flask import Flask, request, jsonify
 import re
 
-# Initialize the bot with your token
+# Initialize the bot with your token (hardcoded for testing)
 bot_token = '7828618514:AAGbumaaNSLyqNn1NbtJbIJ7j0u8RS-a5kw'  # Your bot token
 bot = telepot.Bot(bot_token)
 
 # Create a Flask app
 app = Flask(__name__)
 
-# Define your Render app URL here
-WEBHOOK_URL = f"https://gatewaychk.onrender.com/{bot_token}"  # Your Render app URL
+# Define your webhook URL dynamically for Railway
+WEBHOOK_URL = f"https://{os.getenv('RAILWAY_APP_URL')}/{bot_token}"
 
 # Helper functions
 def format_url(url):
@@ -75,8 +75,7 @@ def create_site_report(site):
 def handle_message(msg):
     chat_id = msg['chat']['id']
     text = msg['text']
-    print(f"Received message: {text}")  # Log the received message
-
+    
     if text.startswith('/start'):
         bot.sendMessage(chat_id, f"Hello {msg['from']['first_name']}, welcome to Eon Gateway Chk bot!")
     elif text.startswith('/cmds'):
@@ -108,15 +107,15 @@ def handle_message(msg):
 @app.route(f"/{bot_token}", methods=["POST"])
 def receive_update():
     update = request.get_json()
-    print("Received update:", update)  # Log the incoming update
     if "message" in update:
         handle_message(update["message"])
     return jsonify({"status": "ok"})
 
+# Set webhook when starting
+@app.before_first_request
+def set_webhook():
+    bot.setWebhook(WEBHOOK_URL)
+
 # Run Flask app
 if __name__ == "__main__":
-    # Set the webhook in the main block to avoid errors with before_first_request
-    response = bot.setWebhook(WEBHOOK_URL)
-    print(f"Webhook set response: {response}")  # Log the webhook response
-
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
