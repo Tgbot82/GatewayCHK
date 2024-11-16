@@ -5,15 +5,15 @@ import telepot
 from flask import Flask, request, jsonify
 import re
 
-# Initialize the bot with your token (hardcoded for testing)
+# Initialize the bot with your token (hardcoded)
 bot_token = '7828618514:AAGbumaaNSLyqNn1NbtJbIJ7j0u8RS-a5kw'  # Your bot token
 bot = telepot.Bot(bot_token)
 
 # Create a Flask app
 app = Flask(__name__)
 
-# Define your webhook URL dynamically for Railway
-WEBHOOK_URL = f"https://{os.getenv('RAILWAY_APP_URL')}/{bot_token}"
+# Define webhook URL dynamically for Koyeb
+WEBHOOK_URL = f"https://{os.getenv('KOYEB_APP_URL')}/{bot_token}"
 
 # Helper functions
 def format_url(url):
@@ -118,4 +118,4 @@ def set_webhook():
 
 # Run Flask app
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
+    app.run(host="0.0.0.0", port=3000)  # Koyeb uses port 3000
